@@ -88,6 +88,12 @@ class RMSDFinder:
                                  'of the numpy library.  For very large files,'
                                  ' this option may be preferable, as this '
                                  'utility will use far less memory.')
+        parser.add_argument('--binary-output', dest='binary_output_path',
+                            default=None, type=str,
+                            help='Save output in BINARY_OUTPUT_PATH, as a ' 
+                                 'numpy binary file.  If the user does not '
+                                 'specify a file, output will be printed to '
+                                 'STDOUT.')
         self.args = parser.parse_args()
 
     def _load_skip_list(self):
@@ -199,6 +205,8 @@ class RMSDFinder:
         # If low memory mode is enabled:
         if self.args.low_memory_mode is True:
             coordfile = open(coord_path,'r')
+            if self.args.binary_output_path is not None:
+                output_array = []
             for line in coordfile:
 
                 # Create n*3 array for the final datapoint in the coordfile.
@@ -211,10 +219,14 @@ class RMSDFinder:
                 # Calculate rmsd between the reference structure and the  
                 # stucture specified by the current line of the coordfile. 
                 rmsd = self.RMSD(self.ref_structure, line_array)
-
-                # Print the rmsd value to the screen.
-                print(rmsd)
+                if self.args.binary_output_path is not None:
+                    output_list.append(rmsd)
+                else:
+                    # Print the rmsd value to the screen.
+                    print(rmsd)
             coordfile.close()
+            output_array = numpy.array(output_array)
+            numpy.save(self.args.binary_output_path, output_array)
 
         # If low memory mode is not enabled (default)
         else:
@@ -223,9 +235,16 @@ class RMSDFinder:
             coords = coords.reshape(coords.shape[0], coords.shape[1]/3, 3)
             coords = coords[:,self.skip_mask]
             coords = coords.reshape(coords.shape[0], coords.shape[1]/3, 3)
-            for timestep in coords:
+            if self.args.binary_output_path is not None:
+                output_array = numpy.empty(coords.shape[0],dtype=float)
+            for i, timestep in enumerate(coords):
                 rmsd = self.RMSD(self.ref_structure, timestep)
-                print(rmsd)
+                if self.args.binary_output_path is not None:
+                    output_array[i] = rmsd
+                else: 
+                    print(rmsd)
+            if self.args.binary_output_path is not None:
+                numpy.save(self.args.binary_output_path, output_array)
 
 ################################## Main Code ###################################
 
