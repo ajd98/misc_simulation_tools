@@ -1,8 +1,8 @@
 #!/usr/bin/env python
+# visualizer.py
+# contains classes for visualizing C-alpha model trajectories
+#
 # Written 7/2015 by Alex DeGrave
-
-
-################################# FUNCTIONS ###################################
 from __future__ import print_function
 import argparse
 import MDAnalysis
@@ -228,6 +228,7 @@ class Visualizer:
         Something odd with the method can cause the BBQ output file not to 
         finish.  Running the BBQ script from the command line, however, does
         not produce this error.
+        This method is now outdated, but I am keeping it around anyway.
         '''
         subprocess.Popen(["bash",self.BBQ_script_path]).wait()
         
@@ -250,7 +251,7 @@ class Visualizer:
                           "BBQ",
                           "-d=/home/ajd98/apps/BBQ/q_50_xyz.dat",
                           "-r=%s/%s"%(self.args.raw_output_dir,raw_pdb_name)],
-                          stdout=stdout_file, stderr=stderr_file).wait() 
+                         stdout=stdout_file, stderr=stderr_file).wait() 
         return
 
     class PDBFormatter:
@@ -265,7 +266,11 @@ class Visualizer:
             self.output_lines = self.input_lines 
             return
 
-        def add_header_information(self,coordinate_file_path,current_iteration=None,current_segment=None,current_timepoint=None,root_iteration=None,root_segment=None):
+        def add_header_information(self, coordinate_file_path,
+                                   current_iteration=None, 
+                                   current_segment=None, 
+                                   current_timepoint=None,
+                                   root_iteration=None, root_segment=None):
             '''
             Add header lines describing the time of creation and source file for coordinates. 
             '''
@@ -279,7 +284,7 @@ class Visualizer:
             self.output_lines.insert(0, 'HEADER **PDB FILE CREATED BY VISUALIZER.PY, WRITTEN BY ALEX DEGRAVE** \n')
             self.output_lines.insert(1, 'HEADER created on %s\n' % time.strftime('%c'))
             self.output_lines.insert(2, 'HEADER from coordinate file %s\n' % os.path.abspath(coordinate_file_path)) 
-            if root_iteration and root_segment:
+            if (root_iteration is not None) and (root_segment is not None):
                 self.output_lines.insert(3, 'HEADER This structure is part of a trace from iteration %d, segment %d \n' \
                                          % (root_iteration, root_segment)) 
             return
@@ -288,6 +293,8 @@ class Visualizer:
             '''
             Add header lines describing secondary structure for Calbindin-AFF.
             Helical residues are based on PDB 3ICB.
+            
+            Edit this section for use with systems other than calbindin-AFF.
             '''
             self.output_lines.insert(0, 'HELIX    4 III THR      3  ASP     11  1                                  10   \n') 
             self.output_lines.insert(1, 'HELIX    5  IV SER     19  GLN     32  1IRREGULAR, 3/10 FOR 66-70         14   \n') 
@@ -394,6 +401,8 @@ class Visualizer:
         information for calbindin-AFF (based on PDB 3ICB), highlights
         residues at which fluorophores are attached, and colors the individual
         EF-hands. This function then uses subprocessing to run the script.
+
+        Edit this section for use with systems other than calbindin-AFF.
         '''
         pymol_script = open(self.pymol_script_path,'w+')
         pymol_script.write("from pymol import cmd\n")
@@ -439,7 +448,7 @@ class Visualizer:
         universe = MDAnalysis.Universe(self.args.topology_file)
         
         # A horribly hacky fix for the weird BBQ errors. 
-        print('\nOutputting the selected frame PDB file to ``{0}``'.format(\
+        print('\nOutputting the selected frame as a PDB file to ``{0}``'.format(\
               self.args.BBQ_output_dir + '/000000-renumbered.pdb')) 
         temp_coord_array = numpy.empty([2]+[i for i in coord_array.shape[1:]])
         temp_coord_array[0] = coord_array[self.args.tp_id]
@@ -459,7 +468,8 @@ class Visualizer:
         
         # Write a script for BBQ to run on every structure and fill in the 
         # backbone coordinates, from the C-alpha input coordinates.
-        self.write_BBQ_script(coord_array.shape[0])
+        #self.write_BBQ_script(coord_array.shape[0])
+        self.write_BBQ_script(2)
         
         # Run the BBQ_script
         self.run_BBQ_script()
@@ -512,6 +522,7 @@ class Visualizer:
         for i in range(coordinates.shape[0]):
             self.run_BBQ('%06d.pdb'%i)
             sys.stdout.flush()
+            # Output live progress information to terminal
             print('\rRunning BBQ: {0}%'.format(int(float(i)/coordinates.shape[0]*100)), end='') 
     
         # Reformat the PDB files
