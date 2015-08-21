@@ -70,6 +70,14 @@ class RestartFileMaker:
                                  'coordinate output file.  Specify this option '
                                  'or use the ``--line`` option, but not both.'
                             )
+        parser.add_argument('--zero-time',
+                            default=False,
+                            type=bool,
+                            dest='zero_time',
+                            help='If True, zero the time line of the restart '
+                                 'file.  By default, use the time from the '
+                                 'coordinate file that the structure came from.'
+                            )
         self.args = parser.parse_args()
 
         # Check for invalid input combinations.
@@ -146,7 +154,10 @@ class RestartFileMaker:
         mysterious_line = self.reffile.readline()
 
         # Write the header line
-        self.outputfile.write('time ={:>21.5f} ps\n'.format(self.time))
+        if self.args.zero_time:
+            self.outputfile.write('time ={:>21.5f} ps\n'.format(0))
+        else:
+            self.outputfile.write('time ={:>21.5f} ps\n'.format(self.time))
 
         # Print the cryptic line to the new restart file.
         self.outputfile.write(mysterious_line)
