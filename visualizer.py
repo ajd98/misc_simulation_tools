@@ -89,30 +89,26 @@ class Visualizer:
         Given a numpy array of x,y,z coordinates, this function returns the 
         centroid of these coordinates (points are weighted equally)
         '''
-        sums = numpy.sum(coordinate_array, axis=1)
+        sums = numpy.squeeze(numpy.sum(coordinate_array, axis=1))
         return numpy.array((
                             float(sums[0])/float(len(coordinate_array)),
                             float(sums[1])/float(len(coordinate_array)),
                             float(sums[2])/float(len(coordinate_array)) 
                             ))
+    def least_squares_rotation_matrix(self, native_structure, new_structure):
+        '''
+        Calculate and return the least squares rotation matrix.  
 
-    def align(self,native_structure,new_structure): 
+        Given an N*3 reference array of coordinates (``native structure``) A and
+        an N*3 array of coordinates B (``new_structure``), calculate the 3 by 3
+        proper rotation matrix U such that the root-mean-square deviation of A 
+        and B'=BU is minimized.
+
+        Note that this function does NOT apply translations to align the
+        centroids of input arrays.  In general, this step should be applied
+        to ``native_structure`` and ``new_structure`` before passing them
+        to this function.
         '''
-        Performs a least-squares superimposition of ``new_structure`` on
-        ``native_structure`` and returns an aligned ``new_structure`` array,
-        with its centroid at the origin.
-        ``native_stucture`` and ``new_structure`` should be numpy arrays with 
-        dimension zero as the particle number, and dimension 1 as x,y,z 
-        coordinates.
-        '''
-    
-        # Center both native_structure and new_structure on centroid.
-        c = self.centroid(native_structure) 
-        for i in range(len(native_structure)):
-            native_structure[i] = numpy.subtract(native_structure[i], c)
-        c = self.centroid(new_structure)
-        for i in range(len(new_structure)):
-            new_structure[i] = numpy.subtract(new_structure[i], c)
     
         ### Use Kabsch algorithm to calculate optimal rotation matrix. ###
         # Calculate covariance matrix.
@@ -130,10 +126,45 @@ class Visualizer:
         U = numpy.dot(numpy.transpose(Wt),
                    numpy.dot(numpy.array(((1,0,0),(0,1,0),(0,0,d))),
                    numpy.transpose(V)))
+        return U
+
+    def align(self, native_structure, new_structure, mask=None): 
+        '''
+        Performs a least-squares superimposition of ``new_structure`` on
+        ``native_structure`` and returns an aligned ``new_structure`` array,
+        with its centroid at the origin.
+        ``native_stucture`` and ``new_structure`` should be numpy arrays with 
+        dimension zero as the particle number, and dimension 1 as x,y,z 
+        coordinates.
+
+        (Optional) ``mask`` should be an array of the same dimensions as 
+        ``native_structure`` and ``new_structure``, consisting of rows of ones
+        and zeros.  Rows filled with ones denote that a particular particle 
+        should be included in the alignment step, while rows of zeros denote 
+        that the particle should be skipped during alignment.
+        '''
+        if mask is not None:
+            whole_structure = new_structure
+            new_structure = new_structure[mask]
+            native_structure = native_structure[mask]
+
+        # Center both native_structure and new_structure on centroid.
+        native_c = self.centroid(native_structure) 
+        for i in range(native_structure.shape[0]):
+            native_structure[i] = numpy.subtract(native_structure[i], native_c)
+        new_c = self.centroid(new_structure)
+        for i in range(new_structure.shape[0]):
+            new_structure[i] = numpy.subtract(new_structure[i], new_c)
+        U = self.least_squares_rotation_matrix(native_structure, new_structure)
     
         # Multiplying new_structure (n*3 matrix) by 3*3 optimal rotation matrix
         # ``U`` gives least_squares alignment.
-        l_aligned = new_structure.dot(U)
+        if mask is None:
+            l_aligned = new_structure.dot(U)
+        else:
+            for i in range(whole_structure.shape[0]):
+                whole_structure[i] = numpy.subtract(new_structure[i], new_c)
+            l_aligned = whole_structure.dot(U) 
         return l_aligned
 
     def get_coordinates(self, iteration_id=None, segment_id=None):
@@ -503,7 +534,7 @@ class Visualizer:
         for i_coord, coord_array in enumerate(coordinates):
     
             # Align the structures
-            aligned_array = self.align(coordinates[0],coord_array)
+            aligned_array = self.align(coordinates[0], coord_array, mask=self.mask)
     
             # Write the new pdb
             writer = universe.trajectory.Writer(
@@ -544,6 +575,10 @@ class Visualizer:
 
     def run(self):
         if self.args.output_mode == 'movie':
+            # Align on the middle frame
+            self.mask = [0 for i in range(38)] + [1 for i in range(38,82)] + [0 for i in range(82,113)]
+            self.mask = numpy.array(self.mask)
+            self.mask = numpy.dstack((self.mask,self.mask,self.mask))
             self.make_movie()
         elif self.args.output_mode == 'image':
             self.make_image()
