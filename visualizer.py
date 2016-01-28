@@ -89,12 +89,8 @@ class Visualizer:
         Given a numpy array of x,y,z coordinates, this function returns the 
         centroid of these coordinates (points are weighted equally)
         '''
-        sums = numpy.squeeze(numpy.sum(coordinate_array, axis=1))
-        return numpy.array((
-                            float(sums[0])/float(len(coordinate_array)),
-                            float(sums[1])/float(len(coordinate_array)),
-                            float(sums[2])/float(len(coordinate_array)) 
-                            ))
+        return coordinate_array.mean(axis=0)
+
     def least_squares_rotation_matrix(self, native_structure, new_structure):
         '''
         Calculate and return the least squares rotation matrix.  
@@ -137,23 +133,23 @@ class Visualizer:
         dimension zero as the particle number, and dimension 1 as x,y,z 
         coordinates.
 
-        (Optional) ``mask`` should be an array of the same dimensions as 
-        ``native_structure`` and ``new_structure``, consisting of rows of ones
+        (Optional) ``mask`` should be an array of dimension 
+        native_structure.shape[0], consisting of ones
         and zeros.  Rows filled with ones denote that a particular particle 
         should be included in the alignment step, while rows of zeros denote 
         that the particle should be skipped during alignment.
         '''
         if mask is not None:
             whole_structure = new_structure
-            new_structure = new_structure[mask]
-            native_structure = native_structure[mask]
+            new_structure = new_structure[numpy.where(mask==1)]
+            native_structure = native_structure[numpy.where(mask==1)]
 
         # Center both native_structure and new_structure on centroid.
         native_c = self.centroid(native_structure) 
-        for i in range(native_structure.shape[0]):
+        for i in xrange(native_structure.shape[0]):
             native_structure[i] = numpy.subtract(native_structure[i], native_c)
         new_c = self.centroid(new_structure)
-        for i in range(new_structure.shape[0]):
+        for i in xrange(new_structure.shape[0]):
             new_structure[i] = numpy.subtract(new_structure[i], new_c)
         U = self.least_squares_rotation_matrix(native_structure, new_structure)
     
@@ -163,7 +159,7 @@ class Visualizer:
             l_aligned = new_structure.dot(U)
         else:
             for i in range(whole_structure.shape[0]):
-                whole_structure[i] = numpy.subtract(new_structure[i], new_c)
+                whole_structure[i] = numpy.subtract(whole_structure[i], new_c)
             l_aligned = whole_structure.dot(U) 
         return l_aligned
 
@@ -224,6 +220,7 @@ class Visualizer:
             # Make an array of all the coordinates
             coordinates = numpy.vstack([point[2][0:self.args.tp_length-1]\
                                         for point in trajectory]) 
+            print("Shape of coords: " + repr(coordinates.shape))
 
         # Add code for fort.23 files and xtcs here
         elif self.coordinate_file_type == 'fort23':
@@ -530,6 +527,7 @@ class Visualizer:
         # Prepare the MDAnalysis universe for loading coordinates, by first loading
         # a topology file.
         universe = MDAnalysis.Universe(self.args.topology_file)
+        print("Shape of coordinates[0]: " + repr(coordinates[0].shape))
     
         for i_coord, coord_array in enumerate(coordinates):
     
@@ -578,7 +576,6 @@ class Visualizer:
             # Align on the middle frame
             self.mask = [0 for i in range(38)] + [1 for i in range(38,82)] + [0 for i in range(82,113)]
             self.mask = numpy.array(self.mask)
-            self.mask = numpy.dstack((self.mask,self.mask,self.mask))
             self.make_movie()
         elif self.args.output_mode == 'image':
             self.make_image()
