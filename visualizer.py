@@ -220,7 +220,6 @@ class Visualizer:
             # Make an array of all the coordinates
             coordinates = numpy.vstack([point[2][0:self.args.tp_length-1]\
                                         for point in trajectory]) 
-            print("Shape of coords: " + repr(coordinates.shape))
 
         # Add code for fort.23 files and xtcs here
         elif self.coordinate_file_type == 'fort23':
@@ -527,7 +526,6 @@ class Visualizer:
         # Prepare the MDAnalysis universe for loading coordinates, by first loading
         # a topology file.
         universe = MDAnalysis.Universe(self.args.topology_file)
-        print("Shape of coordinates[0]: " + repr(coordinates[0].shape))
     
         for i_coord, coord_array in enumerate(coordinates):
     
