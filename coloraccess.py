@@ -15,20 +15,21 @@
 #
 # Copyright 2016, Alex DeGrave
 #
+# Color matrices based on http://www.colorjack.com (open-source; link now dead)
+#
+#
+#
 # coloraccess.py
 #
 # Utility for checking the compatibility of color schemes with color vision 
 # deficiencies.
 # 
-# Written 3-6-16 by Alex DeGrave
-#
-# Color matrices based on http://www.colorjack.com (open-source; link now dead)
-#
-# 
-# 
+# How to use:
 
+from __future__ import print_function
 import argparse
 import numpy
+import sys
 import time 
 import matplotlib.pyplot as plt
 from scipy import misc
@@ -72,11 +73,20 @@ class ColorAccessTool:
 
 
     def parse_args(self):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(description= \
+                     'coloraccess.py, written by Alex DeGrave. '
+                     'This utility simulates a variety of color vision '
+                     'deficiencies in order to aid the design of accessible '
+                     'images and figures.  To use, specify an image file and ' 
+                     'an output file (an image or .pdf). This utility will '
+                     'tile the image, with different color vision deficiencies '
+                     'simulated in each tile.  Note that this utility requires '
+                     'matplotlib, NumPy, and SciPy.')
         parser.add_argument('-i', '--input', type=str, required=True,
                             dest='imagepath',
                             help='Input file.  Read the image located at '
-                            'IMAGEPATH.'
+                            'IMAGEPATH. The image format may be png, jpg, or '
+                            'other common formats.' 
                             )
         parser.add_argument('-o', '--output', type=str, required=True,
                             dest='outpath',
@@ -96,6 +106,7 @@ class ColorAccessTool:
         labels = ['normal', 'deuteranomaly', 'deuteranopia', 'protanomaly', 
                   'protanopia', 'tritanomaly', 'tritanopia', 
                   'achromatomaly', 'achromatopsia']
+        print('Calculating output images... {:d}%'.format(0), end='')
         for idx, label in enumerate(labels):
             iplot = idx//3
             jplot = idx%3
@@ -115,9 +126,14 @@ class ColorAccessTool:
                 labelleft='off'
                            )
             ax.set_title(label)
+            print('\rCalculating output images... {:d}%'.format(int((idx+1.)/9.*100)),
+                  end=''
+                  )
+            sys.stdout.flush()
             
         fig = plt.gcf()
         fig.set_size_inches(10,8)
+        print('\nSaving output...')
         plt.savefig(self.args.outpath, dpi=300)
 
 
