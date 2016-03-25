@@ -18,13 +18,25 @@
 # Color matrices based on http://www.colorjack.com (open-source; link now dead)
 #
 #
-#
 # coloraccess.py
 #
 # Utility for checking the compatibility of color schemes with color vision 
 # deficiencies.
 # 
 # How to use:
+#
+# This utility simulates a variety of color vision 
+# deficiencies in order to aid the design of accessible 
+# images and figures.  To use, specify an image file and  
+# an output file (an image or .pdf). This utility will 
+# tile the image, with different color vision deficiencies 
+# simulated in each tile.  Note that this utility requires 
+# matplotlib, NumPy, and SciPy.
+#
+# Run this script as python coloraccess.py -i <my_image> -o <outputpath>
+# where <outputpath> has an image extension, such as .png, .jpg, or .pdf
+# For more information, run `python coloraccess.py --help`.
+#
 
 from __future__ import print_function
 import argparse
