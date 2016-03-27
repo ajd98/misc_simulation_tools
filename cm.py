@@ -57,7 +57,7 @@ def load_contact_list(go_parameters_file_path):
 def load_distance_reference_array_and_mask(contact_list):
     '''
     Creates a numpy array representing a square distance reference matrix from
-    a list of contacts.  This functino accepts a contact list formatted as:
+    a list of contacts.  This function accepts a contact list formatted as:
 
             [[particle_idx_1, particle_idx_2, distance_in_native_structure], 
              [particle_idx_1, particle_idx_2, distance_in_native_structure], 
