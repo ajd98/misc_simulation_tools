@@ -15,56 +15,6 @@ class PFoldAnalysis:
         self.dirlist = dirlist
         self.success_status = 0
         self.alpha = alpha
-       
-    #def nCr(self, n, r):
-    #    '''n choose r'''       
-    #    if r > n:
-    #        raise ValueError("nCr cannot be evaluated for r>n!")
-    #    return math.factorial(n)/(math.factorial(r)*math.factorial(n-r))
-
-    #def binomial_pm(self, p, k, n):
-    #    '''Return probability mass at k for binomial distribution with n
-    #    samples and success probability p'''
-    #    return self.nCr(n,k)*(p**k)*(1-p)**(n-k) 
-
-    #def upper_error_in_p(self, p, k, n, alpha):  
-    #    '''Returns a function representing the error in the probability 
-    #    estimate'''
-    #    s = 0
-    #    for m in range(k,n+1):
-    #        s += self.binomial_pm(p, m, n)
-    #    return abs(s - alpha/2.0)
-
-    #def lower_error_in_p(self, p, k, n, alpha):  
-    #    '''Returns a function representing the error in the probability 
-    #    estimate'''
-    #    s = 0
-    #    for m in range(0,k+1):
-    #        s += self.binomial_pm(p, m, n)
-    #    return abs(s - alpha/2.0)
-
-    ##def upper_error_in_p(self, p, k, n, alpha):  
-    #    '''Returns a function representing the error in the probability 
-    #    estimate'''
-    #    s = 0
-    #    for m in range(k,n+1):
-    #        s += self.binomial_pm(p, m, n)
-    #    return abs(self.binomial_pm(p, k, n) - alpha/2.0)
-
-    #def clopper_pearson(self, k, n, alpha):
-    #    '''Find the Clopper-Pearson CI of width (1-alpha) based on an
-    #    experiment with k successes out of n trials.'''
-    #    x_bar = float(k)/n
-    #    #lb = scipy.optimize.fminbound(self.lower_error_in_p, 0, x_bar, 
-    #    #                              args=(k, n, self.alpha), xtol=1.0e-10)
-    #    #ub = scipy.optimize.fminbound(self.upper_error_in_p, x_bar, 1, 
-    #    #                              args=(k, n, self.alpha), xtol=1.0e-10)
-    #    lb = scipy.optimize.minimize_scalar(self.lower_error_in_p, bracket=(0, x_bar), 
-    #                                  args=(k, n, self.alpha), tol=1.0e-10, method='Golden')
-    #    print(lb)
-    #    ub = scipy.optimize.minimize_scalar(self.upper_error_in_p, bracket=(x_bar, 1), 
-    #                                  args=(k, n, self.alpha), tol=1.0e-10, method='Golden')
-    #    return lb, ub
 
     def clopper_pearson(self, k, n, alpha):
         lb = scipy.stats.beta.ppf(alpha/2, k, n-k+1)
