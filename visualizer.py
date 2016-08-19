@@ -257,7 +257,7 @@ class Visualizer:
         not produce this error.
         This method is now outdated, but I am keeping it around anyway.
         '''
-        subprocess.Popen(["bash",self.BBQ_script_path]).wait()
+        p = subprocess.Popen(["bash",self.BBQ_script_path]).wait()
         
         return
 
@@ -273,12 +273,17 @@ class Visualizer:
         else:
             stdout_file = open("%s/%s"%(self.args.BBQ_output_dir,raw_pdb_name),'w')
         stderr_file = open("BBQ.err",'w+') 
-        subprocess.Popen(["java","-classpath",
-                          "/home/ajd98/apps/BBQ:/home/ajd98/apps/BBQ/jbcl.jar",
-                          "BBQ",
-                          "-d=/home/ajd98/apps/BBQ/q_50_xyz.dat",
-                          "-r=%s/%s"%(self.args.raw_output_dir,raw_pdb_name)],
-                         stdout=stdout_file, stderr=stderr_file).wait() 
+        p = subprocess.Popen(["java","-classpath",
+                             "/home/ajd98/apps/BBQ:/home/ajd98/apps/BBQ/jbcl.jar",
+                             "BBQ",
+                             "-d=/home/ajd98/apps/BBQ/q_50_xyz.dat",
+                             "-r=%s/%s"%(self.args.raw_output_dir,raw_pdb_name)],
+                            stdout=stdout_file, stderr=stderr_file).wait() 
+        #p = os.system("java -classpath "
+        #              "/home/ajd98/apps/BBQ:/home/ajd98/apps/BBQ/jbcl.jar "
+        #              "BBQ -d=/home/ajd98/apps/BBQ/q_50_xyz.dat "
+        #              "-r={:s}/{:s} > BBQ.err".format(self.args.raw_output_dir,raw_pdb_name))
+                             
         return
 
     class PDBFormatter:
@@ -489,7 +494,7 @@ class Visualizer:
 	    # Write the new pdb
 	    writer = universe.trajectory.Writer(
 		self.args.raw_output_dir + '/%06d.pdb' % icoords,
-		numatoms=self.args.num_atoms)
+		n_atoms=self.args.num_atoms)
 	    universe.atoms.set_positions(aligned_array)
 	    writer.write(universe)
         
@@ -499,8 +504,8 @@ class Visualizer:
         self.write_BBQ_script(2)
         
         # Run the BBQ_script
-        self.run_BBQ_script()
-        #self.run_BBQ('000000.pdb')
+        #self.run_BBQ_script()
+        self.run_BBQ('000000.pdb')
     
     
         # Reformat the PDB file
@@ -516,7 +521,7 @@ class Visualizer:
             self.args.BBQ_output_dir+'/%06d-renumbered.pdb'%0)
         
         # Run pymol to visualize the trajectory. 
-        self.write_and_run_pymol_script(1) 
+        #self.write_and_run_pymol_script(1) 
         return
 
     def make_movie(self):
@@ -535,7 +540,7 @@ class Visualizer:
             # Write the new pdb
             writer = universe.trajectory.Writer(
                 self.args.raw_output_dir + '/%06d.pdb' % i_coord,
-                numatoms=self.args.num_atoms)
+                n_atoms=self.args.num_atoms)
             universe.atoms.set_positions(aligned_array)
             writer.write(universe)
         
@@ -547,7 +552,8 @@ class Visualizer:
         #self.run_BBQ_script()
         print('\n')
         for i in range(coordinates.shape[0]):
-            self.run_BBQ('%06d.pdb'%i)
+            # Removed 4/15/16 due to error...
+            ###self.run_BBQ('%06d.pdb'%i)
             sys.stdout.flush()
             # Output live progress information to terminal
             print('\rRunning BBQ: {0}%'.format(int(float(i)/coordinates.shape[0]*100)), end='') 
