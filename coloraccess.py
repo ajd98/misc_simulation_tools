@@ -110,7 +110,7 @@ class ColorAccessTool:
     def create_image(self):
         '''
         Main function. Load input image, simulate color vision deficiencies,
-        and size to a tiled output file.
+        and save to a tiled output file.
         '''
            
         orig_arr = misc.imread(self.args.imagepath)
