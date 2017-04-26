@@ -505,7 +505,7 @@ class Visualizer:
         
         # Run the BBQ_script
         #self.run_BBQ_script()
-        self.run_BBQ('000000.pdb')
+        #self.run_BBQ('000000.pdb')
     
     
         # Reformat the PDB file
