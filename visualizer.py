@@ -27,6 +27,9 @@ class Visualizer:
             self.coordinate_file_type = 'westpa'
         if self.args.fort23_name is not None:
             self.coordinate_file_type = 'fort23'
+        if self.args.xtc_name is not None:
+            self.coordinate_file_type = 'xtc'
+
         if self.coordinate_file_type == 'westpa':
             self.westh5_file = h5py.File(self.args.westh5_name,'r')
 
@@ -37,11 +40,15 @@ class Visualizer:
         parser = argparse.ArgumentParser()
         # Coordinate file types
         parser.add_argument('--westh5', dest='westh5_name', default=None,
-                            help='Inpuyt coordinates from the specified '
+                            help='Input coordinates from the specified '
                                  'west.h5 file. Ex: west.h5')
         parser.add_argument('--fort23', dest='fort23_name', default=None,
                             help='Input coordinates from the specified '
                                  'fort.23 file. Ex: fort.23')
+        parser.add_argument('--xtc', dest='xtc_name', default=None,
+                            help="Input coordinates from the specified xtc file"
+                                 " Ex: testout.xtc")
+                           
         # WESTPA specific flags 
         parser.add_argument('--iter', dest='root_iteration', default=None, type=int,
                             help='The iteration from which to start tracing. Ex: 500')
@@ -49,11 +56,13 @@ class Visualizer:
                             help='The segment id of the segment to trace. Ex: 100')
         parser.add_argument('--tp-length', dest='tp_length', default=3, type=int,
                             help='The number of timepoints per iteration. Ex: 3')
+
         # Topology information
         parser.add_argument('--topo', dest='topology_file', default=None, 
                             help='The topology file. Ex: 3icb.pdb')
         parser.add_argument('--num-atoms', dest='num_atoms', default=113, type=int,
                             help='The number of atoms in the system. Ex: 113')
+
         # Flag for images
         parser.add_argument('--timepoint-id', dest='tp_id', default=None, type=int,
                             help='The timepoint id of the structure for which'
@@ -178,9 +187,13 @@ class Visualizer:
             coords = self.westh5_file['iterations/iter_%08d/auxdata/coords'\
                                        % iteration_id][segment_id]
             coords = numpy.array(coords)
+
         if self.coordinate_file_type == 'fort23':
             coords = numpy.loadtxt(self.args.fort23_name)[:,1:] 
             coords = coords.reshape((coords.shape[0],coords.shape[1]/3,3)) 
+
+        if self.coordinate_file_type == 'xtc':
+            coords =  
         return coords  
  
     def trace(self, iteration_id, segment_id):
@@ -222,11 +235,9 @@ class Visualizer:
                                         for point in trajectory]) 
 
         # Add code for fort.23 files and xtcs here
-        elif self.coordinate_file_type == 'fort23':
+        elif self.coordinate_file_type == 'fort23' or\
+                self.coordinate_file_type == 'xtc':
              coordinates = self.get_coordinates()
-        elif self.coordinate_file_type == 'xtc':
-            print('Methods for xtc files are not yet implemented.') 
-            sys.exit(1) 
          
         return coordinates  
 
