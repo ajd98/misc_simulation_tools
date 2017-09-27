@@ -67,6 +67,10 @@ class RandomOrientation(object):
     def random_rotation_matrix(self):
         '''
         Generate a random (uniform) 3 by 3 rotation matrix.  
+
+        More exactly, return a 3 by 3 rotation matrix describing the rotation
+        required to transform the unit vector (1,0,0) to a randomly chosen
+        vector on S^2.
         '''
         # Pick a random point on the unit sphere (S3)
         # See http://mathworld.wolfram.com/SpherePointPicking.html
