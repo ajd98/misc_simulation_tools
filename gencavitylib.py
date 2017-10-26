@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import numpy
+import argparse
 '''
 Generate a cavity.lib file for use with Voidoo*, based on an Amber parm7 
 topology file.
@@ -7,20 +9,27 @@ topology file.
 
 -----------
 How to use:
-  Import the CavityLibGen object into a Python script, then initialize the 
-  object as CavityLibGen(parmpath), where parmpath is a (str) file path to
-  the parm7 file.
+  Call this tool via the command line, specifying the path to an Amber topology
+  file as "--parmpath <topology>" and the path to an output file as 
+  "--output <outfile>" (optional, default is cavity.lib.autogen).
 
-  The cavity.lib file will be written to "cavity.lib.autogen".
+  Alternatively, import the CavityLibGen object into a Python script, then 
+  initialize the object as CavityLibGen(parmpath), where parmpath is a (str) 
+  file path to the parm7 file.
+
+  The cavity.lib file will be written to "cavity.lib.autogen". Once the script
+  has completed, open the cavity.lib.autogen file and remove the "RESI" entries
+  for residues that should NOT be included in the volume calculation.  For 
+  example, you will typically want to remove "RESI WAT" (solvent) entries.
 '''
-import numpy
 
 class CavityLibGen(object):
-    def __init__(self, parmpath):
+    def __init__(self, parmpath, output='cavity.lib.autogen'):
         '''
         parmpath: path to Amber parm file
         '''
         self.parmpath = parmpath
+        self.outpath = output
         self._load()
         self.build_map()
         self.print_cavity_lib()
@@ -152,7 +161,9 @@ class CavityLibGen(object):
             self.map[(reslabel, atomname)] = vdw_r
 
     def print_cavity_lib(self):
-        outfile = open('cavity.lib.autogen','w+')
+        outfile = open(self.outpath,'w+')
+        lines_to_write = []
+        resiset = set()
         for (reslabel, atomname), vdw_r in self.map.iteritems():
             atomname = atomname.strip()
             if len(atomname) == 1:
@@ -161,9 +172,40 @@ class CavityLibGen(object):
                 atomname = " {:s} ".format(atomname)
             elif len(atomname) == 3:
                 atomname = " {:s}".format(atomname)
-            outfile.write("SPAT '{:s}*{:s}' {:.03f}\n".format(reslabel, atomname, vdw_r)) 
-        
+            lines_to_write.append("SPAT '{:s}*{:s}' {:.03f}\n".format(reslabel, atomname, vdw_r)) 
+            resiset.add(reslabel)
+
+        # Sort the SPAT entries
+        lines_to_write.sort()
+
+        resilist = list(resiset)
+        resilist.sort()
+
+        # Add the RESI entries 
+        for reslabel in resilist:
+            lines_to_write.append("RESI '{:s}'\n".format(reslabel))
+
+        # Write the lines to the output file.
+        for line in lines_to_write:
+            outfile.write(line)
+
         outfile.close()
+
+class CavityLibGenTool(CavityLibGen):
+    def __init__(self):
+        self._parse_args()
+        super(CavityLibGen, self).__init__(self.args.parmpath, self.args.output)
+
+    def _parse_args(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--parmpath', dest='parmpath', required=True,
+                            help="The file path to the amber topology file "
+                                 "(.parm7).")
+        parser.add_argument('--output', dest='output', 
+                            default='cavity.lib.autogen',
+                            help="The output path for the cavity.lib file")
+        self.args = parser.parse_args()
+        
 
 if __name__ == "__main__":
    CavityLibGen('VILLIN.parm7')
